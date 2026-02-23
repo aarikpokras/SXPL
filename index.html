@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<title>SXPL Client</title>
+
+<input placeholder="X-Plane IP address" id="xpip" />
+<button onclick="loadip()">Load</button><br /><br />
+
+<div id="mncon">
+  <button class="tab" onclick="cTab('tab1')">Flight</button>
+  <button class="tab" onclick="cTab('tab2')">Failures</button>
+  <button class="tab" onclick="cTab('tab3')">Weather/Time</button>
+  <button class="tab" onclick="cTab('tabLog')" style="background-color: white;">Log</button>
+  <button class="tab" onclick="sPause()">Pause/Unpause</button>
+</div>
+<hr />
+<div id="tabcn">
+
+<div class="tab-content" id="tab1">
+  <b>Start Flight</b><br />
+  <i>Runway Start</i><br />
+
+  <label>Airport: </label><input id="t1-rws-ap" /><br />
+  <label>Runway: </label><input id="t1-rws-rwy" /><br />
+  <button onclick="stFlt_rwy()">Go</button><br /><br />
+
+  <i>Air Start</i><br />
+  <label>Latitude: </label><input id="t1-ais-lat" placeholder="Decimal" /><br />
+  <label>Longitude: </label><input id="t1-ais-lon" placeholder="Decimal" /><br />
+  <label>Altitude </label><input id="t1-ais-ft" type="number" min="0" /><label>ft MSL</label><br />
+  <label>Speed: </label><input id="t1-ais-ms" type="number" min="0" /><label>kts</label><br />
+  <label>Heading: </label><input id="t1-ais-hdg" type="number" min="0" max="360" /><label>deg</label><br />
+  <button onclick="stFlt_air()">Go</button>
+</div>
+
+<div class="tab-content" id="tab2">
+  <b>Instrument Failures</b><br />
+  <button>Attitude indicator</button>
+  <button>Airspeed indicator</button>
+  <button>Altimeter</button>
+  <button>Tachometer</button>
+  <button>CDI?</button>
+</div>
+
+<!--
+Clear = 0, High Cirrus = 1, Scattered = 2, Broken = 3, Overcast = 4, Stratus = 5 (740 and newer)
+-->
+
+<div class="tab-content" id="tab3">
+  <b>Clouds</b><br />
+  <i>Layer </i><input id="t3-cld-num" type="number" min="0" max="2" />
+  <br /><button onclick="load_cld1()">Load/update this cloud layer</button><br />
+  Type:<br />
+  <label><input type="radio" name="t3-cl1-type" value="CLEAR" />Clear</label>
+  <label><input type="radio" name="t3-cl1-type" value="HIGH_CIRRUS" />High cirrus</label>
+  <label><input type="radio" name="t3-cl1-type" value="SCATTERED" />Scattered</label>
+  <label><input type="radio" name="t3-cl1-type" value="BROKEN" />Broken</label>
+  <label><input type="radio" name="t3-cl1-type" value="OVERCAST"/>Overcast</label>
+  <label><input type="radio" name="t3-cl1-type" value="STRATUS"/>Stratus</label><br />
+  Cover: <input id="t3-cl1-cvr" type="number" min="0" max="6" /><br />
+  Base: <input id="t3-cl1-bsft" type="number" min="0" />ft MSL<br />
+  Top: <input id="t3-cl1-tpft" type="number" min="0" />ft MSL<br /><br />
+
+  <b>Wind</b><br />
+  <i>Layer </i><input id="t3-wnd-num" type="number" min="0" max="2" /><br />
+  <button onclick="load_wnd1()">Load/update this wind layer</button><br />
+  Center altitude of this layer: <input id="t3-wnd-calt" type="number" min="0" />ft MSL<br />
+  Direction: <input id="t3-wnd-hdg" type="number" min="0" max="360" />deg true<br />
+  Speed: <input id="t3-wnd-spd" type="number" min="0" />kts<br /><br />
+
+  <b>Shear</b><br />
+  <i>For wind layer </i><input id="t3-shr-num" type="number" min="0" max="2" /><br />
+  <button>Add shear to specified wind layer</button><br />
+  Shear direction: <input id="t3-shr-hdg" type="number" min="0" max="360" />deg true<br />
+  Speed gained from shear: <input id="t3-shr-spd" type="number" min="0" /><br /><br />
+
+  <b>Turbulence</b><br />
+  <i>For wind layer </i><input id="t3-trb-num" type="number" min="0" max="2" /><br />
+  <button>Add turbulence to specified wind layer</button><br />
+  Turbulence strength (0-10): <input id="t3-trb-str" type="number" min="0" max="10" /><br /><br />
+
+  <b>Time</b><br />
+  <i>Local time (24 hours, decimal)</i><br />
+  Time: <input id="t3-tm-lc" type="number" min="0" max="24" /><br />
+  Day of year: <input id="t3-tm-lc-doy" type="number" min="0" max="365" /><br />
+  <button onclick="tme_local()">Set local time</button><br />
+  <i>Zulu time (24 hours, decimal)</i><br />
+  Time: <input id="t3-tm-z" type="number" min="0" max="24" /><br />
+  Day of year: <input id="t3-tm-z-doy" type="number" min="0" max="365" /><br />
+  <button onclick="tme_zulu()">Set zulu time</button>
+</div>
+
+<div class="tab-content" id="tabLog">
+<button onclick="get_dr_LL()">Log current lat/lon</button><br />
+</div>
+
+</div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+body{
+  font-family: 'Inter', sans-serif;
+}
+
+input{
+  font-family: 'Inter', sans-serif;
+}
+
+.tab{
+  border-radius: 7px;
+  transition: border 0.12s;
+}
+
+.tab:hover{
+  border-color: rgba(0, 0, 0, 0);
+}
+
+#mncon{
+  display: flex;
+  gap: 3px;
+}
+
+button{
+  border: 1px solid black;
+  font-family: 'Inter', sans-serif;
+}
+
+#tabLog{
+  white-space: pre;
+  font-family: monospace;
+}
+
+#tabcn{
+  width: 90vw;
+  height: 600px;
+  overflow: scroll;
+  border-bottom: 1px solid black;
+}
+
+.tab-content{
+  padding: 10px;
+}
+</style>
+
+<script>
+const VERSION = 1.21;
+const PORT = 6741;
+uiLogMsg("SXPL v" + VERSION);
+
+var ip;
+
+function uiLogMsg(msg) {
+  document.getElementById('tabLog').innerHTML += new Date().toLocaleString() + "]: <b>" + msg + "</b>\n";
+}
+
+function loadip() {
+  ip = document.getElementById('xpip').value;
+  uiLogMsg("Loaded IP address " + ip);
+  console.log("Loaded IP address " + ip);
+  fetch('http://' + ip + ':' + PORT + '/hello')
+    .then((rsp) => {
+      if (!rsp.ok) {
+        uiLogMsg("HTTP error when authenticating server: " + rsp.status);
+        throw new Error("HTTP error when authenticating server: " + rsp.status);
+      }
+      return rsp.text();
+    }).then((data) => {
+      if (data != "hello") {
+        uiLogMsg("Server contacted, but wrong response. Continuing. Recv " + data); // test all ts on server!
+        console.log("Server contacted, but wrong response. Continuing. Recv " + data);
+      } else {
+        uiLogMsg("Server contacted, everything ok");
+        console.log("Server contacted, everything ok");
+      }
+    }).catch((err) => {
+      uiLogMsg("Error: " + err.message);
+      console.error("Error: " + err);
+    });
+}
+
+function stFlt_rwy() {
+  var ap = document.getElementById('t1-rws-ap').value;
+  var rwy = document.getElementById('t1-rws-rwy').value;
+  fetch('http://' + ip + ':' + PORT + '/flt-rwy/' + ap.toUpperCase() + '/' + rwy.toUpperCase()); // add server-side error handling here
+}
+
+function stFlt_air() {
+  var m = parseFloat(document.getElementById('t1-ais-ft').value) / 3.281;
+  var lat = parseFloat(document.getElementById('t1-ais-lat').value);
+  var lon = parseFloat(document.getElementById('t1-ais-lon').value);
+  var mps = parseFloat(document.getElementById('t1-ais-ms').value) / 1.944;
+  var hdg = parseFloat(document.getElementById('t1-ais-hdg').value);
+  fetch('http://' + ip + ':' + PORT + '/flt-air/' + lat + '/' + lon + '/' + m + '/' + mps + '/' + hdg);
+}
+
+function sPause() {
+  fetch('http://' + ip + ':' + PORT + '/sim-pause');
+}
+
+function cTab(tId) {
+  document.querySelectorAll('.tab-content').forEach(function(e) {
+    e.style.display = "none";
+  });
+  document.getElementById(tId).style.display = "block";
+}
+
+cTab('tab1');
+
+const Cl_types = {
+  CLEAR: 0,
+  HIGH_CIRRUS: 1,
+  SCATTERED: 2,
+  BROKEN: 3,
+  OVERCAST: 4,
+  STRATUS: 5
+};
+
+function load_cld1() {
+  var rads = document.getElementsByName('t3-cl1-type');
+  var clt_int;
+  for (let i = 0; i < rads.length; i++) {
+    if (rads[i].checked) {
+      clt_int = Cl_types[rads[i].value];
+      break;
+    }
+  }
+  var cover = parseFloat(document.getElementById('t3-cl1-cvr').value);
+  var base = parseFloat(document.getElementById('t3-cl1-bsft').value) / 3.281;
+  var top = parseFloat(document.getElementById('t3-cl1-tpft').value) / 3.281;
+  var layernum = parseInt(document.getElementById('t3-cld-num').value);
+  fetch('http://' + ip + ':' + PORT + '/set/' + clt_int + '/sim/weather/cloud_type[' + layernum + ']');
+  fetch('http://' + ip + ':' + PORT + '/set/' + cover + '/sim/weather/cloud_coverage[' + layernum + ']');
+  fetch('http://' + ip + ':' + PORT + '/set/' + base + '/sim/weather/cloud_base_msl_m[' + layernum + ']');
+  fetch('http://' + ip + ':' + PORT + '/set/' + top + '/sim/weather/cloud_tops_msl_m[' + layernum + ']');
+}
+
+function load_wnd1() {
+  var layernum = parseInt(document.getElementById('t3-wnd-num').value);
+  var calt = parseFloat(document.getElementById('t3-wnd-calt').value) / 3.281;
+  var dir = parseFloat(document.getElementById('t3-wnd-hdg').value);
+  var vel = parseFloat(document.getElementById('t3-wnd-spd').value);
+  fetch('http://' + ip + ':' + PORT + '/set/' + calt + '/sim/weather/wind_altitude_msl_m[' + layernum + ']');
+  fetch('http://' + ip + ':' + PORT + '/set/' + dir + '/sim/weather/wind_direction_degt[' + layernum + ']');
+  fetch('http://' + ip + ':' + PORT + '/set/' + vel + '/sim/weather/wind_speed_kt[' + layernum + ']');
+}
+
+function tme_local() {
+  var doy = parseInt(document.getElementById('t3-tm-lc-doy').value);
+  var tme = parseFloat(document.getElementById('t3-tm-lc').value);
+  fetch('http://' + ip + ':' + PORT + '/time/' + doy + '/L/' + tme);
+}
+
+function tme_zulu() {
+  var doy = parseInt(document.getElementById('t3-tm-z-doy').value);
+  var tme = parseFloat(document.getElementById('t3-tm-z').value);
+  fetch('http://' + ip + ':' + PORT + '/time/' + doy + '/Z/' + tme);
+}
+
+function get_dr(dr_name, waitt) {
+  if (waitt) {
+    uiLogMsg('Please wait...');
+  }
+  return fetch('http://' + ip + ':' + PORT + '/dr/' + dr_name)
+  .then((rsp) => {
+    return rsp.json();
+  });
+}
+
+function get_dr_LL() {
+  var lat = get_dr('sim/flightmodel/position/latitude', true).then((lat) => {
+    var lon = get_dr('sim/flightmodel/position/longitude', false).then((lon) => {
+      uiLogMsg("Latitude: " + lat["data"]["data"]);
+      uiLogMsg("Longitude: " + lon["data"]["data"]);
+    });
+  });
+}
+</script>
