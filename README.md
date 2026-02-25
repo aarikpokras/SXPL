@@ -5,6 +5,8 @@ X-Plane 12 remote control software
 
 I'm working on making this FAA ATD compliant. I'm currently using it for my flight simulator that I plan on submitting as a BATD for FAA approval. As such, only the Cessna 172 SP is implemented, but more aircraft can be added in with a little modification.
 
+The program can currently read and write (assuming the dataref is writable) to any dataref, start flights, and modify them, among other things.
+
 > [!important]
 > server.py should be running on the machine with X-Plane, and index.html should be used to communicate with it from the remote machine.
 
